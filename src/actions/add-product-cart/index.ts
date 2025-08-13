@@ -2,14 +2,17 @@
 
 import { and, eq } from "drizzle-orm";
 import { headers } from "next/headers";
+import type z from "zod";
 
 import { db } from "@/db";
 import { cartItemTable, cartTable, productVariantTable } from "@/db/schema";
 import { auth } from "@/lib/auth";
 
-import { AddProductCartSchema, addProductCartSchema } from "./schema";
+import { addProductCartSchema } from "./schema";
 
-export const addProductCart = async (data: AddProductCartSchema) => {
+export const addProductCart = async (
+  data: z.infer<typeof addProductCartSchema>,
+) => {
   addProductCartSchema.parse(data);
 
   const session = await auth.api.getSession({
