@@ -9,7 +9,7 @@ import { db } from "@/db";
 import { productTable, productVariantTable } from "@/db/schema";
 import { formatCentsToBRL } from "@/helpers/money";
 
-import { QuantitySelector } from "./components/quantity-selector";
+import { ProductsActions } from "./components/products-actions";
 import { VariantSelector } from "./components/variants-selector";
 
 interface ProductVariantPageProps {
@@ -77,9 +77,7 @@ const ProductVariantPage = async ({ params }: ProductVariantPageProps) => {
           </p>
         </div>
 
-        <div className="px-5">
-          <QuantitySelector />
-        </div>
+        <ProductsActions productVariantId={productVariant.id} />
 
         <ProductsList title="Talvez você goste" products={products} />
 
