@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 
 import Header from "@/components/common/header";
 import { db } from "@/db";
-import { cartTable } from "@/db/schema";
+import { cartTable, shippingAddressTable } from "@/db/schema";
 import { auth } from "@/lib/auth";
 
 import Addresses from "./components/addresses";
@@ -29,11 +29,18 @@ export default async function IdentificationPage() {
     redirect("/");
   }
 
+  const shippingAddress = await db.query.shippingAddressTable.findMany({
+    where: eq(shippingAddressTable.userId, session.user.id),
+    orderBy: (shippingAddressTable, { desc }) => [
+      desc(shippingAddressTable.createdAt),
+    ],
+  });
+
   return (
     <>
       <Header />
       <div className="px-5">
-        <Addresses />
+        <Addresses shippingAddress={shippingAddress} />
       </div>
     </>
   );

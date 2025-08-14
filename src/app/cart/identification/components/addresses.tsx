@@ -20,6 +20,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import type { shippingAddressTable } from "@/db/schema";
 import { useCreateShippingAddress } from "@/hooks/mutations/use-create-shipping-address";
 import { useSelectShippingAddress } from "@/hooks/mutations/use-select-shipping-address";
 import { useUserShippingAddresses } from "@/hooks/queries/use-user-shipping-addresses";
@@ -40,12 +41,16 @@ const addressFormSchema = z.object({
 
 type AddressFormSchema = z.infer<typeof addressFormSchema>;
 
-const Addresses = () => {
+interface AddressesProps {
+  shippingAddress: (typeof shippingAddressTable.$inferSelect)[];
+}
+
+const Addresses = ({ shippingAddress }: AddressesProps) => {
   const [selectedAddress, setSelectedAddress] = useState<string | null>(null);
   const createShippingAddressMutation = useCreateShippingAddress();
   const selectShippingAddressMutation = useSelectShippingAddress();
   const { data: addresses, isLoading: isLoadingAddresses } =
-    useUserShippingAddresses();
+    useUserShippingAddresses({ initialData: shippingAddress });
 
   const form = useForm<AddressFormSchema>({
     resolver: zodResolver(addressFormSchema),
