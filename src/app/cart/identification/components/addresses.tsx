@@ -21,6 +21,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useCreateShippingAddress } from "@/hooks/mutations/use-create-shipping-address";
+import { useSelectShippingAddress } from "@/hooks/mutations/use-select-shipping-address";
+import { useUserShippingAddresses } from "@/hooks/queries/use-user-shipping-addresses";
 
 const addressFormSchema = z.object({
   email: z.string().email("Email inválido"),
@@ -41,6 +43,9 @@ type AddressFormSchema = z.infer<typeof addressFormSchema>;
 const Addresses = () => {
   const [selectedAddress, setSelectedAddress] = useState<string | null>(null);
   const createShippingAddressMutation = useCreateShippingAddress();
+  const selectShippingAddressMutation = useSelectShippingAddress();
+  const { data: addresses, isLoading: isLoadingAddresses } =
+    useUserShippingAddresses();
 
   const form = useForm<AddressFormSchema>({
     resolver: zodResolver(addressFormSchema),
@@ -70,6 +75,19 @@ const Addresses = () => {
     }
   };
 
+  const handleSelectExistingAddress = async () => {
+    if (!selectedAddress || selectedAddress === "add_new") return;
+
+    try {
+      await selectShippingAddressMutation.mutateAsync({
+        addressId: selectedAddress,
+      });
+      toast.success("Endereço selecionado com sucesso!");
+    } catch {
+      toast.error("Erro ao selecionar endereço. Tente novamente.");
+    }
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -77,15 +95,55 @@ const Addresses = () => {
       </CardHeader>
       <CardContent>
         <RadioGroup value={selectedAddress} onValueChange={setSelectedAddress}>
-          <Card>
-            <CardContent>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="add_new" id="add_new" />
-                <Label htmlFor="add_new">Adicionar novo endereço</Label>
-              </div>
-            </CardContent>
-          </Card>
+          {isLoadingAddresses ? (
+            <div className="py-4 text-center">Carregando endereços...</div>
+          ) : (
+            <>
+              {addresses?.map((address) => (
+                <Card key={address.id}>
+                  <CardContent>
+                    <div className="flex items-start space-x-2">
+                      <RadioGroupItem value={address.id} id={address.id} />
+                      <div className="flex-1">
+                        <Label htmlFor={address.id} className="cursor-pointer">
+                          <div className="text-sm">
+                            {address.recipientName} - {address.street},{" "}
+                            {address.number}
+                            {address.complement &&
+                              `, ${address.complement}`} -{" "}
+                            {address.neighborhood}, {address.city} -{" "}
+                            {address.state} - CEP: {address.zipCode}
+                          </div>
+                        </Label>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+
+              <Card>
+                <CardContent>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="add_new" id="add_new" />
+                    <Label htmlFor="add_new">Adicionar novo</Label>
+                  </div>
+                </CardContent>
+              </Card>
+            </>
+          )}
         </RadioGroup>
+
+        {selectedAddress && selectedAddress !== "add_new" && (
+          <Button
+            onClick={handleSelectExistingAddress}
+            className="mt-4 w-full"
+            disabled={selectShippingAddressMutation.isPending}
+          >
+            {selectShippingAddressMutation.isPending
+              ? "Selecionando endereço..."
+              : "Continuar com o pagamento"}
+          </Button>
+        )}
 
         {selectedAddress === "add_new" && (
           <Card className="mt-4">
