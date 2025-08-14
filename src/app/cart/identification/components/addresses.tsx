@@ -4,6 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { PatternFormat } from "react-number-format";
+import { toast } from "sonner";
 import { z } from "zod";
 
 import { Button } from "@/components/ui/button";
@@ -19,14 +20,15 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { useCreateShippingAddress } from "@/hooks/mutations/use-create-shipping-address";
 
 const addressFormSchema = z.object({
-  email: z.email("Email inválido"),
-  fullName: z.string().min(1, "Nome completo é obrigatório"),
-  cpf: z.string().min(14, "CPF inválido"),
+  email: z.string().email("Email inválido"),
+  recipientName: z.string().min(1, "Nome completo é obrigatório"),
+  cpfOrCnpj: z.string().min(14, "CPF inválido"),
   phone: z.string().min(15, "Celular inválido"),
-  cep: z.string().min(9, "CEP inválido"),
-  address: z.string().min(1, "Endereço é obrigatório"),
+  zipCode: z.string().min(9, "CEP inválido"),
+  street: z.string().min(1, "Endereço é obrigatório"),
   number: z.string().min(1, "Número é obrigatório"),
   complement: z.string().optional(),
   neighborhood: z.string().min(1, "Bairro é obrigatório"),
@@ -38,16 +40,17 @@ type AddressFormSchema = z.infer<typeof addressFormSchema>;
 
 const Addresses = () => {
   const [selectedAddress, setSelectedAddress] = useState<string | null>(null);
+  const createShippingAddressMutation = useCreateShippingAddress();
 
   const form = useForm<AddressFormSchema>({
     resolver: zodResolver(addressFormSchema),
     defaultValues: {
       email: "",
-      fullName: "",
-      cpf: "",
+      recipientName: "",
+      cpfOrCnpj: "",
       phone: "",
-      cep: "",
-      address: "",
+      zipCode: "",
+      street: "",
       number: "",
       complement: "",
       neighborhood: "",
@@ -56,8 +59,15 @@ const Addresses = () => {
     },
   });
 
-  const onSubmit = (values: AddressFormSchema) => {
-    console.log(values);
+  const onSubmit = async (values: AddressFormSchema) => {
+    try {
+      await createShippingAddressMutation.mutateAsync(values);
+      form.reset();
+      setSelectedAddress(null);
+      toast.success("Endereço criado com sucesso!");
+    } catch {
+      toast.error("Erro ao criar endereço. Tente novamente.");
+    }
   };
 
   return (
@@ -105,7 +115,7 @@ const Addresses = () => {
                   <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                     <FormField
                       control={form.control}
-                      name="fullName"
+                      name="recipientName"
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Nome Completo</FormLabel>
@@ -122,7 +132,7 @@ const Addresses = () => {
 
                     <FormField
                       control={form.control}
-                      name="cpf"
+                      name="cpfOrCnpj"
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>CPF</FormLabel>
@@ -174,7 +184,7 @@ const Addresses = () => {
 
                     <FormField
                       control={form.control}
-                      name="cep"
+                      name="zipCode"
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>CEP</FormLabel>
@@ -200,7 +210,7 @@ const Addresses = () => {
 
                   <FormField
                     control={form.control}
-                    name="address"
+                    name="street"
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Endereço</FormLabel>
@@ -289,8 +299,14 @@ const Addresses = () => {
                     />
                   </div>
 
-                  <Button type="submit" className="w-full">
-                    Continuar com o pagamento
+                  <Button
+                    type="submit"
+                    className="w-full"
+                    disabled={createShippingAddressMutation.isPending}
+                  >
+                    {createShippingAddressMutation.isPending
+                      ? "Criando endereço..."
+                      : "Continuar com o pagamento"}
                   </Button>
                 </form>
               </Form>
