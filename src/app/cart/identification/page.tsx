@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 
 import Header from "@/components/common/header";
 import { db } from "@/db";
-import { cartTable, shippingAddressTable } from "@/db/schema";
+import { shippingAddressTable } from "@/db/schema";
 import { auth } from "@/lib/auth";
 
 import Addresses from "./components/addresses";
@@ -19,9 +19,18 @@ export default async function IdentificationPage() {
   }
 
   const cart = await db.query.cartTable.findFirst({
-    where: eq(cartTable.userId, session.user.id),
+    where: (cart, { eq }) => eq(cart.userId, session.user.id),
     with: {
-      items: true,
+      shippingAddress: true,
+      items: {
+        with: {
+          productVariant: {
+            with: {
+              product: true,
+            },
+          },
+        },
+      },
     },
   });
 
@@ -40,7 +49,10 @@ export default async function IdentificationPage() {
     <>
       <Header />
       <div className="px-5">
-        <Addresses shippingAddress={shippingAddress} />
+        <Addresses
+          shippingAddress={shippingAddress}
+          defaultShippingAddressId={cart.shippingAddress?.id ?? null}
+        />
       </div>
     </>
   );
