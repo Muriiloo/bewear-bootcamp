@@ -84,7 +84,9 @@ const Addresses = ({
       });
       form.reset();
       setSelectedAddress(null);
-      toast.success("Endereço criado e vinculado ao carrinho com sucesso!");
+      toast.success("Endereço criado e vinculado ao carrinho com sucesso!", {
+        position: "top-center",
+      });
     } catch {
       toast.error("Erro ao criar endereço. Tente novamente.");
     }
@@ -383,7 +385,7 @@ const Addresses = ({
                     {createShippingAddressMutation.isPending
                       ? "Criando endereço..."
                       : updateCartShippingAddressMutation.isPending
-                        ? "Vinculando endereço..."
+                        ? "Processando..."
                         : "Salvar endereço"}
                   </Button>
                 </form>
