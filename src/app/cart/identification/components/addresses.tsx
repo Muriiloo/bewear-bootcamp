@@ -1,6 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { PatternFormat } from "react-number-format";
@@ -24,6 +25,8 @@ import type { shippingAddressTable } from "@/db/schema";
 import { useCreateShippingAddress } from "@/hooks/mutations/use-create-shipping-address";
 import { useUpdateCartShippingAddress } from "@/hooks/mutations/use-update-cart-shipping-address";
 import { useUserShippingAddresses } from "@/hooks/queries/use-user-shipping-addresses";
+
+import { formatAddress } from "../../helpers/address";
 
 const addressFormSchema = z.object({
   email: z.string().email("Email inválido"),
@@ -50,6 +53,7 @@ const Addresses = ({
   shippingAddress,
   defaultShippingAddressId,
 }: AddressesProps) => {
+  const router = useRouter();
   const [selectedAddress, setSelectedAddress] = useState<string | null>(
     defaultShippingAddressId ?? null,
   );
@@ -100,6 +104,7 @@ const Addresses = ({
         shippingAddressId: selectedAddress,
       });
       toast.success("Endereço vinculado ao carrinho com sucesso!");
+      router.push("/cart/confirmation");
     } catch {
       toast.error("Erro ao vincular endereço. Tente novamente.");
     }
@@ -124,12 +129,7 @@ const Addresses = ({
                       <div className="flex-1">
                         <Label htmlFor={address.id} className="cursor-pointer">
                           <div className="text-sm">
-                            {address.recipientName} - {address.street},{" "}
-                            {address.number}
-                            {address.complement &&
-                              `, ${address.complement}`} -{" "}
-                            {address.neighborhood}, {address.city} -{" "}
-                            {address.state} - CEP: {address.zipCode}
+                            <p>{formatAddress(address)}</p>
                           </div>
                         </Label>
                       </div>
